@@ -500,6 +500,12 @@ def emit_error(message: str, command) -> int:
     return 1
 
 
+def progress(message: str) -> None:
+    """Print a human progress note to stderr - silenced in JSON mode."""
+    if not JSON_OUTPUT:
+        print(message, file=sys.stderr)
+
+
 def format_product(product: dict) -> str:
     """Format a product for display."""
     price = product.get("Price", 0)
@@ -689,7 +695,7 @@ def cmd_search(auth: AuthTokens, args: argparse.Namespace) -> int:
     query = args.query
     limit = args.limit
 
-    print(f"Searching for '{query}'...", file=sys.stderr)
+    progress(f"Searching for '{query}'...")
     products = search_products(auth, query, limit)
 
     if not products:
@@ -708,7 +714,7 @@ def cmd_search(auth: AuthTokens, args: argparse.Namespace) -> int:
 
 def cmd_basket(auth: AuthTokens, args: argparse.Namespace) -> int:
     """Handle the basket command."""
-    print("Fetching basket...", file=sys.stderr)
+    progress("Fetching basket...")
     basket = get_basket(auth)
 
     lines = basket.get("Lines", [])
@@ -732,7 +738,7 @@ def cmd_add(auth: AuthTokens, args: argparse.Namespace) -> int:
     product_id = args.product_id
     quantity = args.quantity
 
-    print(f"Adding product {product_id} (quantity: {quantity}) to basket...", file=sys.stderr)
+    progress(f"Adding product {product_id} (quantity: {quantity}) to basket...")
 
     result = add_to_basket(auth, product_id, quantity)
 
@@ -755,7 +761,7 @@ def cmd_details(auth: AuthTokens, args: argparse.Namespace) -> int:
     """Handle the details command."""
     product_id = args.product_id
 
-    print(f"Fetching details for product {product_id}...", file=sys.stderr)
+    progress(f"Fetching details for product {product_id}...")
 
     try:
         product = get_product_details(auth, product_id)
@@ -776,7 +782,7 @@ def cmd_history(auth: AuthTokens, args: argparse.Namespace) -> int:
 
     if order_id:
         # Show details for specific order
-        print(f"Fetching order {order_id}...", file=sys.stderr)
+        progress(f"Fetching order {order_id}...")
 
         # Get order summary from recent history
         history = get_order_history(auth, skip=0, take=MAX_ORDER_HISTORY_LOOKUP)
@@ -797,7 +803,7 @@ def cmd_history(auth: AuthTokens, args: argparse.Namespace) -> int:
         emit({"order": order, "lines": lines}, "\n" + format_order_details(order, lines))
     else:
         # List recent orders
-        print("Fetching order history...", file=sys.stderr)
+        progress("Fetching order history...")
         history = get_order_history(auth, skip=0, take=limit)
         orders = history.get("Orders", [])
         num_pages = history.get("NumberOfPages", 1)
