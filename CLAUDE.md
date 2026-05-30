@@ -1,6 +1,34 @@
 # CLAUDE.md
 
-AI assistant guidance for this repository. See README.md for project overview and workflow documentation.
+Guidance for AI assistants working in this repository. See README.md for the
+user-facing overview.
+
+## Project
+
+A minimal, single-file CLI for the **nemlig.com grocery API**, focused on
+programmatic/agent use. This is a slimmed fork of
+[eisbaw/nemlig_cli](https://github.com/eisbaw/nemlig_cli): the AI meal-planner,
+Google Sheets import, camera scanner, local grocery list, fridge inventory and
+interactive REPL have been removed. Scope is the five nemlig.com API commands —
+`search`, `details`, `basket`, `add`, `history` — each with a global `--json` flag.
+
+## Conventions (must follow)
+
+- **Single file.** All logic lives in `nemlig_cli.py`. Do not split it into a package.
+- **No new dependencies.** Runtime deps are `requests` + `argcomplete` only (stdlib
+  otherwise). Do not reintroduce anthropic / google / opencv / pyzbar / Pillow / etc.
+- **`--json` first.** Every command that produces output routes its result through the
+  `emit()` / `emit_error()` helpers; progress notes go through `progress()` (stderr,
+  silenced in `--json`). In `--json` mode stdout must be clean JSON — no ANSI codes, no
+  status text. Don't scatter `if JSON_OUTPUT` checks; use the helpers.
+- **Default output unchanged.** Without `--json`, output stays human-formatted/colored.
+- **Credentials** resolve in order: `-u`/`-p` flags → `NEMLIG_USER`/`NEMLIG_PASS` env
+  vars → `~/.config/nemlig/login.json`.
+- **No real personal data** anywhere (code, docs, commits). Use placeholders like
+  "Anders And", "Vesterbrogade 42", order id `12345678`.
+- **Keep `SKILL.md` up to date.** Whenever a command, flag, JSON shape, credential
+  behavior, or error format changes, update `SKILL.md` in the same change so agents
+  always have an accurate guide.
 
 ## Quick Commands
 
@@ -14,56 +42,23 @@ nemlig history               # Order history
 ```
 
 Install with `uv tool install .` to get the `nemlig` executable on `PATH`
-(otherwise use `uv run python nemlig_cli.py`). Pass `-u`/`-p` or set
-`NEMLIG_USER`/`NEMLIG_PASS` (or `~/.config/nemlig/login.json`).
-
-Every command accepts a global `--json` flag (works before or after the
-subcommand) to emit machine-readable JSON to stdout instead of colored text;
-on failure it prints `{"error": ..., "command": ...}` and exits non-zero.
-
-## MCP Usage
-
-Chrome DevTools MCP is configured via `.mcp.json`. Use for API discovery and debugging.
-
-**Critical**: MCP calls return large payloads (>25KB). Always run MCP interactions from a sub-agent to avoid context bloat.
-
-**Privacy**: Never record actual personal information (real names, addresses, phone numbers, order IDs). Replace with realistic placeholder values when documenting APIs (e.g., "Anders And", "Vesterbrogade 42", "+4512345678").
-
-Pattern:
-1. Sub-agent navigates, records network traffic, performs action
-2. Sub-agent returns summary (endpoint, headers, body format)
-3. Main context updates documentation or implements code
-
-## Diagrams
-
-Diagrams are stored as `.drawio.svg` files (SVG with embedded draw.io source). Keep them updated when architecture changes.
-
-**To edit**: Open `.drawio.svg` directly in draw.io - the source is embedded.
-
-**To create/update**:
-```bash
-# Create/edit in draw.io, save as .drawio file, then export:
-drawio -x -f svg --embed-diagram -o diagram.drawio.svg diagram.drawio
-rm diagram.drawio  # Keep only the .svg
-```
-
-Current diagrams:
-- `arch_api.drawio.svg` - API architecture (endpoints, auth flow)
-- `mcp-workflow.drawio.svg` - MCP workflow for API discovery
-
-## Project Commands
-
-Custom slash commands for this project. **Run both in sub-agents in parallel before every commit.**
-
-- `/drawio-updater` - Audit and update `.drawio.svg` diagrams
-- `/privacy-checker` - Scan files for personal data leaks
+(otherwise use `uv run python nemlig_cli.py`). The global `--json` flag works before
+or after the subcommand; on failure it prints `{"error": ..., "command": ...}` and
+exits non-zero.
 
 ## Files
 
-- `nemlig_cli.py` - Single-file Python client
-- `nemlig_api.md` - API documentation (source of truth for endpoints)
-- `SKILL.md` - Agent usage guide for the CLI (Claude skill)
+- `nemlig_cli.py` — the CLI (all logic)
+- `nemlig_api.md` — nemlig.com API reference (source of truth for endpoints)
+- `SKILL.md` — agent usage guide (Claude skill); mirrored at `~/.claude/skills/nemlig-cli/`
+- `pyproject.toml` — packaging; `uv tool install` exposes the `nemlig` entry point
 
-**Keep `SKILL.md` up to date.** Whenever a command, flag, JSON shape, credential
-behavior, or error format changes in `nemlig_cli.py`, update `SKILL.md` in the same
-change so agents always have an accurate guide.
+## Extending the API client
+
+The nemlig.com API is undocumented; endpoints were reverse-engineered by driving a real
+browser. Chrome DevTools MCP is configured in `.mcp.json` (via
+`chrome-devtools-mcp-wrapper.sh`) for that work — MCP responses are large (>25KB), so run
+them from a sub-agent and have it return only a summary (endpoint, headers, body format).
+`arch_api.drawio.svg` documents the auth/search flow. The `/drawio-updater` and
+`/privacy-checker` slash commands (in `.claude/commands/`) audit the diagrams and scan
+for personal-data leaks before committing.
