@@ -5,14 +5,21 @@ AI assistant guidance for this repository. See README.md for project overview an
 ## Quick Commands
 
 ```bash
-just search "cocio"     # Search products
-just details 701025     # Product details
-just basket             # View basket
-just add 701025 2       # Add product
-just history            # Order history
+nemlig search "cocio"        # Search products
+nemlig --json search "cocio" # Search products, JSON output
+nemlig details 701025        # Product details
+nemlig basket                # View basket
+nemlig add 701025 -q 2       # Add product
+nemlig history               # Order history
 ```
 
-Requires `NEMLIG_USER` and `NEMLIG_PASS` environment variables.
+Install with `uv tool install .` to get the `nemlig` executable on `PATH`
+(otherwise use `uv run python nemlig_cli.py`). Pass `-u`/`-p` or set
+`NEMLIG_USER`/`NEMLIG_PASS` (or `~/.config/nemlig/login.json`).
+
+Every command accepts a global `--json` flag (works before or after the
+subcommand) to emit machine-readable JSON to stdout instead of colored text;
+on failure it prints `{"error": ..., "command": ...}` and exits non-zero.
 
 ## MCP Usage
 
@@ -55,4 +62,3 @@ Custom slash commands for this project. **Run both in sub-agents in parallel bef
 
 - `nemlig_cli.py` - Single-file Python client
 - `nemlig_api.md` - API documentation (source of truth for endpoints)
-- `justfile` - Command shortcuts

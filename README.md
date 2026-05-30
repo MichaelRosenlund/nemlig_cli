@@ -2,11 +2,14 @@
 
 Command-line interface for [nemlig.com](https://www.nemlig.com) Danish online grocery store. Single-file Python implementation using `requests` for HTTP and `argparse` for CLI parsing.
 
+This is a slimmed-down fork of [eisbaw/nemlig_cli](https://github.com/eisbaw/nemlig_cli), focused purely on interacting with the nemlig.com API and adding machine-readable `--json` output so the tool can be driven by scripts and AI agents.
+
 ## Features
 
 - Product search and details
 - Shopping basket management (view, add items)
 - Order history viewing
+- `--json` output on every command for scripting/agents
 
 ## Requirements
 
@@ -14,29 +17,65 @@ Command-line interface for [nemlig.com](https://www.nemlig.com) Danish online gr
 - [uv](https://github.com/astral-sh/uv) package manager
 - Credentials for nemlig.com account
 
+## Installation
+
+Recommended: install as a [uv tool](https://docs.astral.sh/uv/guides/tools/),
+which puts a `nemlig` executable on your `PATH`:
+
 ```bash
-# Set credentials as environment variables
+uv tool install .                  # from a local checkout
+# or straight from the repo:
+uv tool install git+https://github.com/MichaelRosenlund/nemlig_cli
+```
+
+You can then run `nemlig` directly (no `uv run` needed):
+
+```bash
+nemlig search "cocio"
+```
+
+To upgrade or remove later: `uv tool upgrade nemlig-cli` / `uv tool uninstall nemlig-cli`.
+
+Without installing, run it in place with `uv run python nemlig_cli.py ...`.
+
+### Credentials
+
+Provide credentials via environment variables and the `-u`/`-p` flags:
+
+```bash
 export NEMLIG_USER="your@email.com"
 export NEMLIG_PASS="yourpassword"
+nemlig -u "$NEMLIG_USER" -p "$NEMLIG_PASS" search "cocio"
+```
+
+Or place them in `~/.config/nemlig/login.json`, in which case `-u`/`-p` can be omitted:
+
+```json
+{"username": "your@email.com", "password": "yourpassword"}
 ```
 
 ## Usage
 
-All commands are available via the justfile:
-
 ```bash
-just search "cocio"              # Search products
-just details 701025              # Product details
-just basket                      # View basket
-just add 701025 2                # Add product (quantity optional)
-just history                     # Order history
-just history 12345678            # Order details
+nemlig search "cocio"              # Search products
+nemlig details 701025              # Product details
+nemlig basket                      # View basket
+nemlig add 701025 --quantity 2     # Add product (quantity optional)
+nemlig history                     # Order history
+nemlig history 12345678            # Order details
 ```
 
-Direct execution:
+### JSON output
+
+Add the global `--json` flag (before or after the command) to make any command
+emit structured JSON to stdout instead of colored text. On failure it prints a
+`{"error": ..., "command": ...}` object and exits non-zero, so an agent can parse
+a single stream and check the exit code.
 
 ```bash
-uv run python nemlig_cli.py -u "$NEMLIG_USER" -p "$NEMLIG_PASS" search "milk"
+nemlig --json search "milk"        # flag before command
+nemlig search "milk" --json        # flag after command
+nemlig --json basket | python -m json.tool
 ```
 
 ## Architecture
@@ -156,7 +195,6 @@ nemlig-cli/
 ├── mcp-workflow.drawio.svg         # MCP workflow diagram
 ├── nemlig_api.md                   # API documentation (built via workflow)
 ├── nemlig_cli.py                   # Python client implementation
-├── justfile                        # Command shortcuts
 ├── pyproject.toml                  # Python project config
 └── CLAUDE.md                       # AI assistant instructions
 ```
