@@ -62,3 +62,8 @@ Custom slash commands for this project. **Run both in sub-agents in parallel bef
 
 - `nemlig_cli.py` - Single-file Python client
 - `nemlig_api.md` - API documentation (source of truth for endpoints)
+- `SKILL.md` - Agent usage guide for the CLI (Claude skill)
+
+**Keep `SKILL.md` up to date.** Whenever a command, flag, JSON shape, credential
+behavior, or error format changes in `nemlig_cli.py`, update `SKILL.md` in the same
+change so agents always have an accurate guide.
