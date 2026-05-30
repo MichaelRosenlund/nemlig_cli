@@ -40,19 +40,23 @@ Without installing, run it in place with `uv run python nemlig_cli.py ...`.
 
 ### Credentials
 
-Provide credentials via environment variables and the `-u`/`-p` flags:
+Credentials are resolved in this order: `-u`/`-p` flags, then the
+`NEMLIG_USER`/`NEMLIG_PASS` environment variables, then the config file. The
+simplest setup is environment variables — they are picked up automatically:
 
 ```bash
 export NEMLIG_USER="your@email.com"
 export NEMLIG_PASS="yourpassword"
-nemlig -u "$NEMLIG_USER" -p "$NEMLIG_PASS" search "cocio"
+nemlig search "cocio"            # no -u/-p needed
 ```
 
-Or place them in `~/.config/nemlig/login.json`, in which case `-u`/`-p` can be omitted:
+Or place them in `~/.config/nemlig/login.json`:
 
 ```json
 {"username": "your@email.com", "password": "yourpassword"}
 ```
+
+Or pass them explicitly per call: `nemlig -u "$NEMLIG_USER" -p "$NEMLIG_PASS" search "cocio"`.
 
 ## Usage
 

@@ -13,13 +13,14 @@ Usage:
 Add --json (before or after the command) to emit machine-readable JSON to
 stdout instead of formatted text - handy for scripting and AI agents.
 
-Credentials can be provided via ~/.config/nemlig/login.json or CLI options.
-CLI options override the config file.
+Credentials are resolved from -u/-p options, then NEMLIG_USER/NEMLIG_PASS
+environment variables, then ~/.config/nemlig/login.json.
 """
 
 import argparse
 import itertools
 import json
+import os
 import re
 import sys
 import threading
@@ -898,8 +899,10 @@ Examples:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
-    username = args.username or config_creds.get("username")
-    password = args.password or config_creds.get("password")
+    # Resolve credentials: -u/-p flags first, then NEMLIG_USER/NEMLIG_PASS env
+    # vars, then the config file.
+    username = args.username or os.environ.get("NEMLIG_USER") or config_creds.get("username")
+    password = args.password or os.environ.get("NEMLIG_PASS") or config_creds.get("password")
 
     if not username or not password:
         missing = []
@@ -917,7 +920,7 @@ Examples:
 
         message = (
             f"Missing {' and '.join(missing)}. {hint} "
-            f"Provide via config file or -u/-p options."
+            f"Provide via -u/-p options, NEMLIG_USER/NEMLIG_PASS env vars, or config file."
         )
         if JSON_OUTPUT:
             return emit_error(message, args.command)
